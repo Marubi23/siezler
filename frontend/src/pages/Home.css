@@ -1,0 +1,357 @@
+/* ============================================
+   SEIZLER NEGOTIATOR - COMPLETE HOMEPAGE CSS
+   ============================================ */
+
+/* Hero Section with Background Image & Blur Effect */
+.heroSection {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  padding-left: calc(50vw - 50%);
+  padding-right: calc(50vw - 50%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Background Image with Subtle Blur */
+.heroSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/back-photo.JPG');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(4px);
+  transform: scale(1.02);
+  z-index: 0;
+}
+
+/* Dark Overlay for Text Readability */
+.heroSection::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}
+
+/* Content Container - Text Appears Above */
+.heroContent {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  animation: fadeInUp 1s ease-out;
+}
+
+/* Hero Title */
+.heroTitle {
+  text-align: center;
+  font-size: 4.5rem;
+  font-weight: 800;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.2;
+  color: white;
+  text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.6);
+  letter-spacing: -0.02em;
+}
+
+/* Hero Subtitle */
+.heroSubtitle {
+  font-size: 1.35rem;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+  max-width: 650px;
+  margin: 0 auto 2.5rem auto;
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.5);
+  line-height: 1.6;
+}
+
+/* Hero Buttons Container */
+.heroButtons {
+  display: flex;
+  gap: 1.25rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Primary Button */
+.btn-primary {
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  color: white;
+  padding: 0.875rem 2.25rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
+}
+
+/* Outline Button */
+.btn-outline {
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  padding: 0.875rem 2.25rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: white;
+  color: #059669;
+  transform: translateY(-3px);
+}
+
+/* Fade In Up Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   FEATURES SECTION
+   ============================================ */
+
+.featuresSection {
+  padding: 5rem 2rem;
+  background: #f9fafb;
+}
+
+.sectionTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #1f2937;
+}
+
+.sectionSubtitle {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1.125rem;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.featureCard {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.featureCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.1);
+}
+
+.featureIcon {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: 1.25rem;
+  color: #059669;
+  stroke-width: 1.5;
+}
+
+.featureTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #1f2937;
+}
+
+.featureDescription {
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* ============================================
+   STEPS SECTION
+   ============================================ */
+
+.stepsSection {
+  padding: 5rem 2rem;
+  background: white;
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.stepCard {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.stepNumber {
+  width: 3.5rem;
+  height: 3.5rem;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 auto 1.25rem;
+  box-shadow: 0 8px 20px rgba(5, 150, 105, 0.25);
+}
+
+.stepCard h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.stepCard p {
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* ============================================
+   CTA SECTION
+   ============================================ */
+
+.ctaSection {
+  padding: 5rem 2rem;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  text-align: center;
+  color: white;
+}
+
+.ctaTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.ctaSubtitle {
+  font-size: 1.125rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ctaButton {
+  background: white;
+  color: #059669;
+  padding: 0.875rem 2.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.ctaButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+  
+  .heroSubtitle {
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .heroButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn-primary, .btn-outline {
+    width: 100%;
+    max-width: 250px;
+  }
+  
+  .sectionTitle {
+    font-size: 2rem;
+  }
+  
+  .featuresGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stepsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ctaTitle {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 1.75rem;
+  }
+  
+  .heroContent {
+    padding: 1rem;
+  }
+  
+  .featureCard {
+    padding: 1.5rem;
+  }
+}

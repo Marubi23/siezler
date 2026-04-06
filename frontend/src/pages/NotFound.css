@@ -1,0 +1,107 @@
+.notfound {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  padding: 2rem;
+}
+
+.notfound-content {
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+.notfound-code {
+  font-size: 8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #059669, #0d9488);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.notfound-divider {
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(135deg, #059669, #0d9488);
+  margin: 0 auto 1.5rem auto;
+  border-radius: 3px;
+}
+
+.notfound-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+
+.notfound-message {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.notfound-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.notfound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  border: none;
+}
+
+.notfound-btn-primary {
+  background: linear-gradient(135deg, #059669, #0d9488);
+  color: white;
+}
+
+.notfound-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.notfound-btn-secondary {
+  background: white;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.notfound-btn-secondary:hover {
+  background: #f9fafb;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 640px) {
+  .notfound-code {
+    font-size: 6rem;
+  }
+  
+  .notfound-title {
+    font-size: 1.25rem;
+  }
+  
+  .notfound-buttons {
+    flex-direction: column;
+  }
+  
+  .notfound-btn {
+    justify-content: center;
+  }
+}
