@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Wallet, Smartphone, ArrowUp, ArrowDown, RefreshCw, Eye, EyeOff, TrendingUp, Clock, Shield } from 'lucide-react';
+import toast from 'react-hot-toast';
 import './WalletDashboard.css';
 
 interface WalletDashboardProps {
@@ -17,6 +18,7 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ userId, phoneN
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
 
   // Fetch wallet data
   const fetchWalletData = async () => {
@@ -28,7 +30,7 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ userId, phoneN
       const balanceData = await balanceRes.json();
       setBalance(balanceData.balance);
       
-      // Fetch M-Pesa balance
+      // Fetch M-Pesa balance (mock for now)
       const mpesaRes = await fetch(`http://localhost:5000/api/mpesa/balance/${phoneNumber}`);
       const mpesaData = await mpesaRes.json();
       setMpesaBalance(mpesaData.balance);
@@ -39,25 +41,70 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ userId, phoneN
       setTransactions(txData);
     } catch (error) {
       console.error('Error fetching wallet data:', error);
+      toast.error('Failed to load wallet data');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchWalletData();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchWalletData, 30000);
-    return () => clearInterval(interval);
-  }, [userId, phoneNumber]);
+  // Poll payment status
+  const pollPaymentStatus = async (checkoutId: string, amountValue: number) => {
+    let attempts = 0;
+    const maxAttempts = 30; // 30 seconds max
+
+    const interval = setInterval(async () => {
+      attempts++;
+      console.log(`Polling payment status... Attempt ${attempts}`);
+
+      try {
+        const response = await fetch('http://localhost:5000/api/mpesa/query-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ checkoutRequestId: checkoutId }),
+        });
+
+        const data = await response.json();
+
+        if (data.ResultCode === 0) {
+          // Payment successful
+          clearInterval(interval);
+          toast.success(`KES ${amountValue.toLocaleString()} added to your wallet!`);
+          fetchWalletData(); // Refresh balance
+          setShowTopUpModal(false);
+          setAmount('');
+          setCheckoutRequestId(null);
+        } else if (data.ResultCode !== '1037') {
+          // 1037 means pending, any other code means failure
+          clearInterval(interval);
+          toast.error(data.ResultDesc || 'Payment failed');
+          setCheckoutRequestId(null);
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        toast.error('Payment timeout. Please check your M-Pesa statement.');
+        setCheckoutRequestId(null);
+      }
+    }, 2000);
+  };
 
   const handleTopUp = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      alert('Please enter a valid amount');
+      toast.error('Please enter a valid amount');
+      return;
+    }
+
+    if (parseFloat(amount) < 10) {
+      toast.error('Minimum top-up amount is KES 10');
       return;
     }
 
     setIsProcessing(true);
+    const loadingToast = toast.loading('Initiating payment request...');
+
     try {
       const response = await fetch('http://localhost:5000/api/wallet/topup', {
         method: 'POST',
@@ -66,21 +113,30 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ userId, phoneN
           userId,
           amount: parseFloat(amount),
           phoneNumber
-        })
+        }),
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
-        alert(`KES ${amount} added to your wallet!`);
-        setShowTopUpModal(false);
-        setAmount('');
-        fetchWalletData();
+        toast.dismiss(loadingToast);
+        toast.success('STK Push sent! Check your phone and enter your M-Pesa PIN', {
+          duration: 5000,
+        });
+        
+        // Store checkoutRequestId for polling
+        setCheckoutRequestId(data.checkoutRequestId);
+        
+        // Start polling for payment status
+        pollPaymentStatus(data.checkoutRequestId, parseFloat(amount));
       } else {
-        alert(data.error || 'Top-up failed');
+        toast.dismiss(loadingToast);
+        toast.error(data.error || 'Top-up failed');
       }
     } catch (error) {
-      alert('Failed to process top-up');
+      console.error('Top-up error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Failed to initiate top-up');
     } finally {
       setIsProcessing(false);
     }
@@ -88,16 +144,18 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ userId, phoneN
 
   const handleWithdraw = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      alert('Please enter a valid amount');
+      toast.error('Please enter a valid amount');
       return;
     }
 
     if (parseFloat(amount) > balance) {
-      alert('Insufficient balance');
+      toast.error('Insufficient balance');
       return;
     }
 
     setIsProcessing(true);
+    const loadingToast = toast.loading('Processing withdrawal...');
+
     try {
       const response = await fetch('http://localhost:5000/api/wallet/withdraw', {
         method: 'POST',
@@ -106,21 +164,25 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ userId, phoneN
           userId,
           amount: parseFloat(amount),
           phoneNumber
-        })
+        }),
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
-        alert(`KES ${amount} withdrawn to your M-Pesa!`);
+        toast.dismiss(loadingToast);
+        toast.success(`KES ${amount} withdrawn to ${phoneNumber}!`);
         setShowWithdrawModal(false);
         setAmount('');
         fetchWalletData();
       } else {
-        alert(data.error || 'Withdrawal failed');
+        toast.dismiss(loadingToast);
+        toast.error(data.error || 'Withdrawal failed');
       }
     } catch (error) {
-      alert('Failed to process withdrawal');
+      console.error('Withdrawal error:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Failed to process withdrawal');
     } finally {
       setIsProcessing(false);
     }
@@ -144,6 +206,13 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ userId, phoneN
     if (days === 1) return 'Yesterday';
     return date.toLocaleDateString('en-KE');
   };
+
+  useEffect(() => {
+    fetchWalletData();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchWalletData, 30000);
+    return () => clearInterval(interval);
+  }, [userId, phoneNumber]);
 
   if (loading) {
     return (
@@ -342,3 +411,5 @@ export const WalletDashboard: React.FC<WalletDashboardProps> = ({ userId, phoneN
     </>
   );
 };
+
+export default WalletDashboard;

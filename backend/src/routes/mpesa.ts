@@ -3,106 +3,91 @@ import prisma from '../lib/prisma';
 
 const router = express.Router();
 
-// Initiate STK Push
-router.post('/initiate', async (req, res) => {
-  try {
-    const { transactionId, amount, phoneNumber, accountReference } = req.body;
-    
-    // Generate checkout request ID
-    const checkoutRequestId = `ws_CO_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-    
-    // Store payment record
-    await prisma.mpesaPayment.create({
-      data: {
-        transactionId,
-        checkoutRequestId,
-        amount,
-        phoneNumber,
-        status: 'PENDING'
-      }
-    });
-    
-    // Update transaction with checkout request ID
-    await prisma.transaction.update({
-      where: { id: transactionId },
-      data: { checkoutRequestId }
-    });
-    
-    res.json({
-      success: true,
-      checkoutRequestId,
-      message: "STK Push sent to customer's phone"
-    });
-  } catch (error) {
-    console.error('Initiate payment error:', error);
-    res.status(500).json({ error: 'Failed to initiate payment' });
-  }
-});
-
-// M-Pesa Callback endpoint
-router.post('/callback/:type/:transactionId', async (req, res) => {
-  const { type, transactionId } = req.params;
+// M-Pesa Callback for Top-Up
+router.post('/topup-callback/:transactionId', async (req, res) => {
+  const { transactionId } = req.params;
   const callbackData = req.body;
-  
-  console.log(`Received ${type} callback for ${transactionId}:`, JSON.stringify(callbackData, null, 2));
-  
+
+  console.log('Received M-Pesa callback:', JSON.stringify(callbackData, null, 2));
+
   try {
-    if (type === 'stk') {
-      const resultCode = callbackData.Body?.stkCallback?.ResultCode;
-      const checkoutRequestId = callbackData.Body?.stkCallback?.CheckoutRequestID;
-      const mpesaReceipt = callbackData.Body?.stkCallback?.CallbackMetadata?.Item?.find(
+    const resultCode = callbackData.Body?.stkCallback?.ResultCode;
+    const resultDesc = callbackData.Body?.stkCallback?.ResultDesc;
+    const checkoutRequestId = callbackData.Body?.stkCallback?.CheckoutRequestID;
+    const mpesaReceipt =
+      callbackData.Body?.stkCallback?.CallbackMetadata?.Item?.find(
         (item: any) => item.Name === 'MpesaReceiptNumber'
       )?.Value;
-      
-      // Update payment record
-      await prisma.mpesaPayment.update({
-        where: { checkoutRequestId },
-        data: {
-          status: resultCode === 0 ? 'SUCCESS' : 'FAILED',
-          mpesaReceiptNumber: mpesaReceipt,
-          resultCode,
-          resultDesc: callbackData.Body?.stkCallback?.ResultDesc,
-          completedAt: resultCode === 0 ? new Date() : undefined
-        }
-      });
-      
-      // Update transaction status
-      if (resultCode === 0) {
-        await prisma.transaction.update({
-          where: { id: transactionId },
-          data: {
-            status: 'PAYMENT_RECEIVED',
-            mpesaReceiptNumber: mpesaReceipt
-          }
-        });
-      }
+    const amount =
+      callbackData.Body?.stkCallback?.CallbackMetadata?.Item?.find(
+        (item: any) => item.Name === 'Amount'
+      )?.Value;
+
+    // Find the pending transaction
+    const pendingTx = await prisma.walletTransaction.findFirst({
+      where: {
+        description: { contains: checkoutRequestId },
+        status: 'pending',
+      },
+      include: {
+        wallet: true,
+      },
+    });
+
+    if (!pendingTx) {
+      console.log('Transaction not found for checkout ID:', checkoutRequestId);
+      return res.json({ ResultCode: 0, ResultDesc: 'Success' });
     }
+
+    if (resultCode === 0) {
+      // Payment successful
+      const newBalance = pendingTx.wallet.balance + amount;
+
+      // Update transaction status
+      await prisma.walletTransaction.update({
+        where: { id: pendingTx.id },
+        data: {
+          status: 'completed',
+          description: `M-Pesa Top Up successful - Receipt: ${mpesaReceipt}`,
+          balanceAfter: newBalance,
+        },
+      });
+
+      // Update wallet balance
+      await prisma.wallet.update({
+        where: { id: pendingTx.walletId },
+        data: { balance: newBalance },
+      });
+
+      console.log(`✅ Top-up successful: KES ${amount} added to wallet ${pendingTx.walletId}`);
+    } else {
+      // Payment failed
+      await prisma.walletTransaction.update({
+        where: { id: pendingTx.id },
+        data: {
+          status: 'failed',
+          description: `M-Pesa Top Up failed: ${resultDesc}`,
+        },
+      });
+
+      console.log(`❌ Top-up failed: ${resultDesc}`);
+    }
+
+    res.json({ ResultCode: 0, ResultDesc: 'Success' });
   } catch (error) {
     console.error('Callback processing error:', error);
+    res.json({ ResultCode: 0, ResultDesc: 'Success' });
   }
-  
-  // Always respond with success to Safaricom
-  res.json({ ResultCode: 0, ResultDesc: "Success" });
 });
 
-// Send OTP for verification
-router.post('/send-otp', async (req, res) => {
+// Query payment status
+router.post('/query-status', async (req, res) => {
   try {
-    const { phoneNumber } = req.body;
-    
-    // In production, send actual OTP via SMS
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Store OTP (you'll need an Otp model)
-    console.log(`OTP for ${phoneNumber}: ${otp}`);
-    
-    res.json({
-      success: true,
-      message: 'OTP sent successfully'
-    });
+    const { checkoutRequestId } = req.body;
+    const result = await querySTKStatus(checkoutRequestId);
+    res.json(result);
   } catch (error) {
-    console.error('Send OTP error:', error);
-    res.status(500).json({ error: 'Failed to send OTP' });
+    res.status(500).json({ error: 'Failed to query status' });
   }
 });
 
